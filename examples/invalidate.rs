@@ -1,6 +1,8 @@
+use std::sync::Mutex;
+
 use turbosloth::*;
 
-static mut REFORBLE: Option<Box<dyn Fn() + Send + Sync>> = None;
+static REFORBLE: Mutex<Option<Box<dyn Fn() + Send + Sync>>> = Mutex::new(None);
 
 #[derive(Clone, Hash)]
 struct Forble;
@@ -10,9 +12,7 @@ impl LazyWorker for Forble {
     type Output = anyhow::Result<String>;
 
     async fn run(self, ctx: RunContext) -> Self::Output {
-        unsafe {
-            REFORBLE = Some(Box::new(ctx.get_invalidation_trigger()));
-        }
+        (*REFORBLE.lock().unwrap()) = Some(Box::new(ctx.get_invalidation_trigger()));
 
         println!("Forbling");
         Ok("forble".to_owned())
@@ -46,9 +46,7 @@ fn main() -> anyhow::Result<()> {
     dbg!(smol::block_on(boop.eval(&cache))?);
 
     println!("Invalidating the forble!");
-    unsafe {
-        (REFORBLE.as_ref().unwrap())();
-    }
+    (REFORBLE.lock().unwrap().as_ref().unwrap())();
 
     dbg!(smol::block_on(boop.eval(&cache))?);
 

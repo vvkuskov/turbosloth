@@ -10,8 +10,8 @@ use std::{
     marker::PhantomData,
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc, Mutex, RwLock, Weak,
+        atomic::{AtomicBool, Ordering},
     },
 };
 
@@ -289,7 +289,7 @@ pub struct RunContext {
 }
 
 impl RunContext {
-    pub fn get_invalidation_trigger(&self) -> impl Fn() + Send + Sync {
+    pub fn get_invalidation_trigger(&self) -> impl Fn() + Send + Sync + use<> {
         let current_ref = Arc::downgrade(&self.tracker.as_ref().unwrap().current_ref);
         move || {
             if let Some(current_ref) = current_ref.upgrade() {
